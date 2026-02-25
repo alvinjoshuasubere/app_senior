@@ -76,12 +76,12 @@ $person = $result->fetch_assoc();
         .qr-code-front img { width: 100%; height: 100%; }
         
         .info-area { flex: 1; padding-left: 10px; }
-        .name-label { font-size: 5pt; color: #718096; text-transform: uppercase; margin: 0; }
+        .name-label { font-size: 5pt; color: #696969ff; text-transform: uppercase; margin: 0; }
         .name-val { font-family: 'Roboto Condensed', sans-serif; font-size: 10.5pt; color: #1a365d; margin-bottom: 4px; line-height: 1.1; }
         
         .data-grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 4px; }
         .data-item { font-size: 6pt; font-weight: 700; border-bottom: 1px solid #edf2f7; padding-bottom: 1px; }
-        .data-label { color: #a0aec0; display: block; font-size: 4.5pt; text-transform: uppercase; }
+        .data-label { color: #696969ff; display: block; font-size: 4.5pt; text-transform: uppercase; }
 
         /* SIGNATURES */
         .front-signatures { display: flex; justify-content: flex-end; align-items: flex-end; padding: 0 10px 4px; position: relative; z-index: 2; }
@@ -99,7 +99,7 @@ $person = $result->fetch_assoc();
             pointer-events: none;
         }
 
-        .sig-line { border-top: 0.8px solid #000; font-size: 5pt; font-weight: bold; padding-top: 1px; text-transform: uppercase; position: relative; z-index: 4; }
+        .sig-line { font-size: 5pt; font-weight: bold; padding-top: 1px; text-transform: uppercase; position: relative; z-index: 4; }
         .sig-title { font-size: 4pt; font-weight: normal; margin-top: 1px; color: #4a5568; }
 
         .id-num-footer { background: #c53030; color: white; font-size: 7.5pt; font-weight: bold; text-align: center;  letter-spacing: 1px; margin-top: auto; }
@@ -110,7 +110,7 @@ $person = $result->fetch_assoc();
         .back-footer { margin-top: auto; display: flex; flex-direction: column; align-items: center; padding-bottom: 6px; }
         .qr-back { width: 12mm; height: 12mm; padding: 2px; background: #fff; border: 1px solid #cbd5e0; }
 
-        .watermark-logo { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 25mm; height: auto; opacity: 0.15; z-index: 1; pointer-events: none; }
+        .watermark-logo { position: absolute; top: 60%; left: 50%; transform: translate(-50%, -50%); width: 30mm; height: auto; opacity: 0.09; z-index: 1; pointer-events: none; }
 
         @media print { .actions { display: none; } .id-card { box-shadow: none; border: 1px solid #000; } }
     </style>
@@ -155,7 +155,7 @@ $person = $result->fetch_assoc();
 
         <div class="front-signatures">
             <div class="sig-container">
-                <!-- <img src="official_signature.png" class="sig-image"> -->
+                <img src="official_signature.png" class="sig-image">
                 <div class="sig-line">HON. ELIORDO U. OGENA</div>
                 <div class="sig-title">Authorized Signature</div>
             </div>
@@ -166,7 +166,7 @@ $person = $result->fetch_assoc();
         </div>
     </div>
 
-    <div class="id-card">
+    <!-- <div class="id-card">
         <div class="back-content">
             <div class="back-title">TERMS AND CONDITIONS</div>
             <div style="font-size: 5.5pt;">
@@ -189,7 +189,7 @@ $person = $result->fetch_assoc();
             <?php endif; ?>
             <p style="font-size: 4.5pt; margin: 4px 0 0; color: #718096; font-weight: bold;">OFFICIAL VERIFICATION QR</p>
         </div>
-    </div>
+    </div> -->
 
     <div class="actions">
         <button onclick="window.location.href='index.php'" style="padding: 12px 25px; background: #1a2935ff; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2); margin-right: 10px;">Return to List</button>
