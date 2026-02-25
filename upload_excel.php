@@ -35,58 +35,97 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['excel_file'])) {
                     $row = $rows[$i];
                     
                     if (count($row) >= 7) {
-                        $id_number = trim($row[0]);
-                        $name = trim($row[1]);
-                        $sex = trim($row[2]);
-                        $barangay = trim($row[3]);
-                        $city = trim($row[4]);
-                        $province = trim($row[5]);
+                        // Map fields according to correct order: ID NO., NAME, SEX, ADDRESS2, ADDRESS3, PROVINCE, BIRTHDATE
+                        $id_number = strtoupper(trim($row[0]));
+                        $name = strtoupper(trim($row[1]));
+                        $sex = strtoupper(trim($row[2]));
+                        $barangay = strtoupper(trim($row[3]));
+                        $city = strtoupper(trim($row[4]));
+                        $province = strtoupper(trim($row[5]));
                         $birthdate = trim($row[6]);
                         
                         // Validate required fields
-                        if (empty($id_number) || empty($name) || empty($sex) || empty($barangay) || empty($city) || empty($province) || empty($birthdate)) {
+                        if (empty($id_number) || empty($name) || empty($sex) || empty($barangay) ||empty($birthdate)) {
                             $errors[] = "Row " . ($i + 1) . ": Missing required fields";
                             $error_count++;
                             continue;
                         }
                         
-                        // Validate sex
-                        if (!in_array(strtolower($sex), ['male', 'female'])) {
-                            $errors[] = "Row " . ($i + 1) . ": Invalid sex value. Must be Male or Female";
+                        // Convert and validate sex
+                        if (in_array($sex, ['F', 'FEMALE'])) {
+                            $sex = 'FEMALE';
+                        } elseif (in_array($sex, ['M', 'MALE'])) {
+                            $sex = 'MALE';
+                        } else {
+                            $errors[] = "Row " . ($i + 1) . ": Invalid sex value. Must be M/F or Male/Female";
                             $error_count++;
                             continue;
                         }
                         
-                        // Validate date format
-                        $date = DateTime::createFromFormat('Y-m-d', $birthdate);
-                        if (!$date) {
-                            $date = DateTime::createFromFormat('m/d/Y', $birthdate);
+                        // Validate date format (allow empty)
+                        if (empty($birthdate)) {
+                            $birthdate = null;
+                        } else {
+                            $date = DateTime::createFromFormat('Y-m-d', $birthdate);
+                            if (!$date) {
+                                $date = DateTime::createFromFormat('m/d/Y', $birthdate);
+                            }
                             if (!$date) {
                                 $date = DateTime::createFromFormat('d/m/Y', $birthdate);
-                                if (!$date) {
-                                    $errors[] = "Row " . ($i + 1) . ": Invalid birthdate format";
-                                    $error_count++;
-                                    continue;
+                            }
+                            if (!$date) {
+                                $date = DateTime::createFromFormat('d-M-y', $birthdate);
+                                // Fix 2-digit years to be in 1900s if they seem unreasonable
+                                if ($date) {
+                                    $year = (int)$date->format('Y');
+                                    if ($year > 2025) {
+                                        // If year is in the future, assume it's 1900s
+                                        $correct_year = $year - 100;
+                                        $date->setDate($correct_year, (int)$date->format('m'), (int)$date->format('d'));
+                                    }
                                 }
                             }
+                            if (!$date) {
+                                $date = DateTime::createFromFormat('d-M-Y', $birthdate);
+                            }
+                            if (!$date) {
+                                $date = DateTime::createFromFormat('d M Y', $birthdate);
+                            }
+                            if (!$date) {
+                                $date = DateTime::createFromFormat('d M y', $birthdate);
+                                // Fix 2-digit years to be in 1900s if they seem unreasonable
+                                if ($date) {
+                                    $year = (int)$date->format('Y');
+                                    if ($year > 2025) {
+                                        // If year is in the future, assume it's 1900s
+                                        $correct_year = $year - 100;
+                                        $date->setDate($correct_year, (int)$date->format('m'), (int)$date->format('d'));
+                                    }
+                                }
+                            }
+                            if (!$date) {
+                                $errors[] = "Row " . ($i + 1) . ": Invalid birthdate format";
+                                $error_count++;
+                                continue;
+                            }
+                            $birthdate = $date->format('Y-m-d');
                         }
-                        $birthdate = $date->format('Y-m-d');
                         
-                        // Check if ID number already exists
-                        $check_stmt = $conn->prepare("SELECT id FROM persons WHERE id_number = ?");
-                        $check_stmt->bind_param("s", $id_number);
+                        // Generate QR code
+                        $qr_data = "ID: " . $id_number . "\nName: " . $name . ($birthdate ? "\nBirthdate: " . $birthdate : "");
+                        $qr_code = generateQRCode($qr_data);
+                        
+                        // Check if name already exists
+                        $check_stmt = $conn->prepare("SELECT id FROM persons WHERE name = ?");
+                        $check_stmt->bind_param("s", $name);
                         $check_stmt->execute();
                         $check_result = $check_stmt->get_result();
                         
                         if ($check_result->num_rows > 0) {
-                            $errors[] = "Row " . ($i + 1) . ": ID Number $id_number already exists";
+                            $errors[] = "Row " . ($i + 1) . ": Person with name '$name' already exists";
                             $error_count++;
                             continue;
                         }
-                        
-                        // Generate QR code
-                        $qr_data = "ID: " . $id_number . "\nName: " . $name . "\nBirthdate: " . $birthdate;
-                        $qr_code = generateQRCode($qr_data);
                         
                         // Insert into database
                         $stmt = $conn->prepare("INSERT INTO persons (id_number, name, sex, barangay, city, province, birthdate, qr_code) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
