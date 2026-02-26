@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(50) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
+    role ENUM('admin', 'staff') DEFAULT 'staff',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -28,4 +29,4 @@ CREATE TABLE IF NOT EXISTS persons (
 );
 
 -- Insert default admin user (password: admin123)
-INSERT IGNORE INTO users (username, password) VALUES ('admin', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi');
+INSERT IGNORE INTO users (username, password) VALUES ('admin', '$2y$10$t4JLI9vdJ5h0K9/2g9GyGeI43J3B7/ujHXPMjsZQ2x/TBVG0iUF2m');

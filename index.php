@@ -37,9 +37,42 @@ if ($barangays_result) {
     }
 }
 
+// Define predefined barangay options
+$predefined_barangays = [
+    'BRGY. AVANCEñA',
+    'BRGY. CACUB',
+    'BRGY. CALOOCAN',
+    'BRGY. CARPENTER HILL',
+    'BRGY. CONCEPCION',
+    'BRGY. ESPERANZA',
+    'BRGY. GENERAL PAULINO SANTOS',
+    'BRGY. MABINI',
+    'BRGY. MAGSAYSAY',
+    'BRGY. MAMBUCAL',
+    'BRGY. MORALES',
+    'BRGY. NAMNAMA',
+    'BRGY. NEW PANGASINAN',
+    'BRGY. PARAISO',
+    'BRGY. ROTONDA',
+    'BRGY. SAN ISIDRO',
+    'BRGY. SAN ROQUE',
+    'BRGY. SAN JOSE',
+    'BRGY. STA. CRUZ',
+    'BRGY. STO. NIñO',
+    'BRGY. SARAVIA',
+    'BRGY. TOPLAND',
+    'BRGY. ZONE 1',
+    'BRGY. ZONE 2',
+    'BRGY. ZONE 3',
+    'BRGY. ZONE 4'
+];
+
 // Get filter parameters
 $filter_barangay = isset($_GET['barangay']) ? $_GET['barangay'] : '';
 $filter_sex = isset($_GET['sex']) ? $_GET['sex'] : '';
+
+// Get current user role
+$user_role = isset($_SESSION['user_role']) ? $_SESSION['user_role'] : 'staff'; // Default to staff for safety
 
 // Build search and filter conditions
 $search_condition = '';
@@ -189,15 +222,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $message_type = "danger";
         }
     } elseif (isset($_POST['delete_person'])) {
-        $id = $_POST['id'];
-        $stmt = $conn->prepare("DELETE FROM persons WHERE id = ?");
-        $stmt->bind_param("i", $id);
-        if ($stmt->execute()) {
-            $message = "Person deleted successfully!";
-            $message_type = "success";
-        } else {
-            $message = "Error deleting person: " . $conn->error;
+        // Only admin can delete persons
+        if ($user_role !== 'admin') {
+            $message = "Error: You don't have permission to delete records.";
             $message_type = "danger";
+        } else {
+            $id = $_POST['id'];
+            $stmt = $conn->prepare("DELETE FROM persons WHERE id = ?");
+            $stmt->bind_param("i", $id);
+            if ($stmt->execute()) {
+                $message = "Person deleted successfully!";
+                $message_type = "success";
+            } else {
+                $message = "Error deleting person: " . $conn->error;
+                $message_type = "danger";
+            }
         }
     }
 }
@@ -254,12 +293,18 @@ if ($result) {
                     <h1 class="h2">Senior Citizen List</h1>
                     <div class="btn-toolbar mb-2 mb-md-0">
                         <div class="btn-group me-2">
-                            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#addPersonModal">
-                                <i class="bi bi-plus-circle"></i> Add Person
-                            </button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#uploadModal">
-                                <i class="bi bi-upload"></i> Upload Excel
-                            </button>
+                            <?php if ($user_role === 'admin'): ?>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#addPersonModal">
+                                    <i class="bi bi-plus-circle"></i> Add Person
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#uploadModal">
+                                    <i class="bi bi-upload"></i> Upload Excel
+                                </button>
+                            <?php else: ?>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#addPersonModal">
+                                    <i class="bi bi-plus-circle"></i> Add Person
+                                </button>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
@@ -447,15 +492,24 @@ if ($result) {
                                                     <?php endif; ?>
                                                 </td>
                                                 <td>
-                                                    <button class="btn btn-sm btn-primary" onclick="window.open('id_card_view.php?id=<?php echo $person['id']; ?>', '_blank')">
-                                                        <i class="bi bi-card-text"></i> ID
-                                                    </button>
-                                                    <button class="btn btn-sm btn-warning" onclick="editPerson(<?php echo $person['id']; ?>)">
-                                                        <i class="bi bi-pencil"></i>
-                                                    </button>
-                                                    <button class="btn btn-sm btn-danger" onclick="deletePerson(<?php echo $person['id']; ?>)">
-                                                        <i class="bi bi-trash"></i>
-                                                    </button>
+                                                    <?php if ($user_role === 'admin'): ?>
+                                                        <button class="btn btn-sm btn-primary" onclick="window.open('id_card_view.php?id=<?php echo $person['id']; ?>', '_blank')">
+                                                            <i class="bi bi-card-text"></i> ID
+                                                        </button>
+                                                        <button class="btn btn-sm btn-warning" onclick="editPerson(<?php echo $person['id']; ?>)">
+                                                            <i class="bi bi-pencil"></i>
+                                                        </button>
+                                                        <button class="btn btn-sm btn-danger" onclick="deletePerson(<?php echo $person['id']; ?>)">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    <?php else: ?>
+                                                        <button class="btn btn-sm btn-primary" onclick="window.open('id_card_view.php?id=<?php echo $person['id']; ?>', '_blank')">
+                                                            <i class="bi bi-card-text"></i> ID
+                                                        </button>
+                                                        <button class="btn btn-sm btn-warning" onclick="editPerson(<?php echo $person['id']; ?>)">
+                                                            <i class="bi bi-pencil"></i>
+                                                        </button>
+                                                    <?php endif; ?>
                                                 </td>
                                             </tr>
                                             <?php endforeach; ?>
@@ -555,7 +609,12 @@ if ($result) {
                             <div class="col-md-4">
                                 <div class="mb-3">
                                     <label for="barangay" class="form-label">Barangay *</label>
-                                    <input type="text" class="form-control" id="barangay" name="barangay" required>
+                                    <select class="form-select" id="barangay" name="barangay" required>
+                                        <option value="">Select Barangay</option>
+                                        <?php foreach ($predefined_barangays as $barangay_option): ?>
+                                            <option value="<?php echo htmlspecialchars($barangay_option); ?>"><?php echo htmlspecialchars($barangay_option); ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
                                 </div>
                             </div>
                             <div class="col-md-4">
@@ -659,7 +718,12 @@ if ($result) {
                             <div class="col-md-4">
                                 <div class="mb-3">
                                     <label for="edit_barangay" class="form-label">Barangay</label>
-                                    <input type="text" class="form-control" id="edit_barangay" name="barangay" required>
+                                    <select class="form-select" id="edit_barangay" name="barangay" required>
+                                        <option value="">Select Barangay</option>
+                                        <?php foreach ($predefined_barangays as $barangay_option): ?>
+                                            <option value="<?php echo htmlspecialchars($barangay_option); ?>"><?php echo htmlspecialchars($barangay_option); ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
                                 </div>
                             </div>
                             <div class="col-md-4">
@@ -734,6 +798,12 @@ if ($result) {
         }
         
         function deletePerson(personId) {
+            // Check if user is admin
+            <?php if ($user_role !== 'admin'): ?>
+                alert('You do not have permission to delete records.');
+                return;
+            <?php endif; ?>
+            
             if (confirm('Are you sure you want to delete this person?')) {
                 const form = document.createElement('form');
                 form.method = 'POST';
